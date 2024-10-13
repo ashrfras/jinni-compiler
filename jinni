@@ -169,9 +169,11 @@ if (is_web) {
 	}
 	
 	// process and create package.json
-	var deps = {};
+	var deps = {'express':'latest'};
 	ImportManager.dependencies.forEach(d => {
-		deps[d] = 'latest';
+		if (!deps[d]) {
+			deps[d] = 'latest';
+		}
 	});
 	packagejson = packagejson.replace('%ئعتمادين%', JSON.stringify(deps));
 	try {
