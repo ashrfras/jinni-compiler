@@ -54,7 +54,9 @@
 		سحبفوق:'dragover'، بدايتسحب:'dragstart'، ئفلات:'drop'، ئدخال:'input'،
 		ضغطمفتاح:'keydown'، تركمفتاح:'keyup'، تحميل:'load'، نهايتحميل:'loadend'،
 		بدتحميل:'loadstart'، دخولمئشر:'mouseenter'، عجلة:'wheel'، تمرير:'scroll'،
-		تحجيم:'resize'، نهايتلمس:'touchend'، ئرسال:'submit'، بدايتلمس:'touchstart'، تحريكمئشر:'mousemove'
+		تحجيم:'resize'، نهايتلمس:'touchend'، ئرسال:'submit'، بدايتلمس:'touchstart'، تحريكمئشر:'mousemove'،
+		ضغطمئشر:'mousedown'، تركمئشر:'mouseup'، تحريكلمس:'touchmove'، تتبيت:'install'،
+		جلب:'fetch'، تنشيط:'activate'، رسالة:'message'، دفع:'push'
 	}؛
 	ئرجع (قموس[ئسم] ك نصية) ئو ئسم؛
 تم

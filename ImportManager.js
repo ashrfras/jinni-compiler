@@ -44,6 +44,12 @@ class ImportManager {
 	// imp is import path
 	// fromFilePath is path of file from which import occuring
 	static addImport (imp, fromFilePath, findName = null) {
+		// validate findName
+		if (findName && findName.includes('.')) {
+			ErrorManager.error(findName + " ليس ئسم ئيراد صالح");
+			return;
+		}
+		
 		// check if currently open => circular dependancy
 		// don't parse an already open file
 		// just return the symbol as منوع

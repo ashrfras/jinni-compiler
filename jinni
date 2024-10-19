@@ -2,7 +2,7 @@
 
 const fs = require('fs');
 const path = require('path');
-const { exec } = require('child_process');
+const { exec, spawn } = require('child_process');
 const util = require('util');
 
 const createParser = require('./jparser');
@@ -151,11 +151,11 @@ if (is_web) {
 	// run jiss
 	(async function runJiss() {
 		try {
-			const { stdout, stderr } = await execPromise('jinni --nowarnings --nocompile ~/.jinni/jiss ' + path.join(projectPath));
+			const { stdout, stderr } = await execPromise('jinni --nowarnings --nocompile ~/.jinni/jiss/جيسس.جني ' + path.join(projectPath));
+			console.log(stdout);
 			if (stderr) {
 				console.error(stderr);
 			}
-			console.log(stdout);
 		} catch (error) {
 			console.error(error.message);
 		}
@@ -186,19 +186,29 @@ if (is_web) {
 	runScript(path.join(projectPath, 'server.mjs'));
 } else {
 	// run
-	runScript(path.join(projectPath, '__خام__', fileName + '.mjs ') + userParams.join(' '));
+	var scriptPath = path.join(projectPath, '__خام__', fileName + '.mjs');
+	runScript(scriptPath, userParams);
 }
 
-async function runScript(myscript) {
-	if (!is_norun) {
-		try {
-			const { stdout, stderr } = await execPromise('node ' + myscript);
-			if (stderr) {
-				console.error(stderr);
-			}
-			console.log(stdout);
-		} catch (error) {
-			console.error(error.message);
+async function runScript(myscript, params = []) {
+	try {
+		const { stdout, stderr } = await execPromise('npm install');
+		console.log(stdout);
+		if (stderr) {
+			console.log(stderr);
 		}
+	} catch (error) {
+		console.error(error.message);
+	}
+	
+	// run script if requested
+	if (!is_norun) {
+		const child = spawn('node', [myscript, ...params]);
+		child.stdout.on('data', (data) => {
+			console.log(`${data}`);
+		});
+		child.stderr.on('data', (data) => {
+			console.log(`${data}`);
+		});
 	}
 }

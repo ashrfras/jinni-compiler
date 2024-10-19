@@ -495,18 +495,29 @@ import_statement
 		var importNames = $2.split(', ');
 		var result = '';
 		importNames.forEach (impName => {
-			var scope = ImportManager.addImport(impName, context.filePath);
-			var symb = scope.getSymbolByName(impName);
+			var scope;
+			var lastPart; // = bar in import foo.bar
+			if (impName.includes('.')) {
+				// if import part contains . we take the last part as import find
+				// ex: import foo.bar becomes like import bar from foo.bar
+				var lastPart = impName.split('.');
+				lastPart = lastPart[lastPart.length-1];
+				scope = ImportManager.addImport(impName, context.filePath, lastPart);
+			} else {
+				lastPart = impName;
+				scope = ImportManager.addImport(impName, context.filePath);
+			}
+			var symb = scope.getSymbolByName(lastPart);
 			if (!symb) {
-				ErrorManager.error("الئسم " + impName + " غير معروف في الوحدة '" + impName + "'");
+				ErrorManager.error("الئسم " + lastPart + " غير معروف في الوحدة '" + impName + "'");
 			}
 			// TODO REVIEW symb.name = sym.add
 			symb.isImport = true;
 			yy.symbolScopes.addSymbol(symb);
 			var imp = '.' + scope.getImportName();
-			var exp = impName;
+			var exp = lastPart;
 			var sep = result == '' ? '' : ';';
-			result += sep + 'import {' + impName + '} from "' + imp + '";'// + '; export {' + exp + '}';
+			result += sep + 'import {' + lastPart + '} from "' + imp + '";'// + '; export {' + exp + '}';
 		});
 		$$ = result;
 	}
@@ -546,8 +557,8 @@ import_specifier
 	}
     ;
 import_list
-    : IDENTIFIER { $$ = $1; }
-    | import_list '،' IDENTIFIER {
+    : import_identifier { $$ = $1; }
+    | import_list '،' import_identifier {
 		$$ = $1 + ', ' + $3
 	}
     ;
@@ -557,6 +568,12 @@ import_path
 		$$ = $1 + '.' + $3
 	}
 	| STRING { $$ = $1; }
+	;
+import_identifier
+	: IDENTIFIER { $$ = $1; }
+	| import_identifier '.' IDENTIFIER {
+		$$ = $1 + '.' + $3
+	}
 	;
 ////
 
