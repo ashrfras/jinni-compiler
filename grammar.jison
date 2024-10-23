@@ -1,3 +1,11 @@
+%{
+	import SymbolScopes from './SymbolScopes.mjs';
+    import vfs from './vfs.mjs';
+	import ErrorManager from './ErrorManager.mjs';
+	import ImportManager from './ImportManager.mjs';
+	import Symbol from './Symbol.mjs';
+%}
+
 /* lexical grammar */
 %lex
 
@@ -92,13 +100,6 @@
 /lex
 
 %{
-    const fs = require('fs');
-    const path = require('path');
-	const SymbolScopes = require('./SymbolScopes');
-	const ErrorManager = require('./ErrorManager');
-	const ImportManager = require('./ImportManager');
-	const Symbol = require('./Symbol');
-	
 	function createParser (yy) {
 		const parser = new Parser();
 		
@@ -117,7 +118,7 @@
 		parser.parse = function (input, ctx) {
 			// here we add global imports to the input source code
 			// do not add global imports on inlineparses
-			var fileName = path.basename(ctx.filePath, '.جني');
+			var fileName = vfs.basename(ctx.filePath);
 			input = ( ctx.inlineParse ? '' : SymbolScopes.autoImportText(ctx.filePath) ) + input;
 			try {
 				var result = parser.originalParse(input, ctx);
@@ -148,13 +149,12 @@
 		if (!s.endsWith('؛')) {
 			s += '؛';
 		}
-		const createParser = require('./jparser');
 		const _parser = createParser(yy);
 		try {
 			const scope = _parser.parse(s, {
 				inlineParse: true,
 				filePath: context.filePath,
-				projectPath: path.resolve(context.projectPath),
+				projectPath: context.projectPath,
 				outPath: context.outPath
 			});
 			return scope;
@@ -309,27 +309,11 @@ program
 		if (context.inlineParse) {
 			return result;
 		}
-		let fileName = context.filePath.replace(context.projectPath, '.').replace('.جني', '.mjs');
-		fileName = fileName.replace(__dirname, '.');
-		fileName = fileName.replaceAll('/', '.').replace('..', '/');
+		let fileName = vfs.relativeBasePath(context.filePath);
+		let outFilePath = vfs.outputFilePath(fileName);
 		
-		// make sure not to repeat last two names: ئساسية.ئساسية.جني becomes ئساسية.جني
-		var nameArr = fileName.split('.');
-		var lastName = nameArr[nameArr.length - 2];
-		var lastLastName = nameArr[nameArr.length - 3];
-		if (lastLastName) {
-			if (lastName == lastLastName.replace('/', '')) {
-				fileName = fileName.replace(lastName + '.', '');
-			}
-		}
+		vfs.writeFile(outFilePath, result);
 		
-		let outFilePath = path.join(context.outPath, fileName);
-		
-		fs.writeFile(outFilePath, result, { flag: 'w+' }, (err) => {
-			if (err) {
-				throw new Error('فشل حفض الملف: ' + outFilePath);
-			}
-		});	
 		// get global scope
 		var glob = yy.symbolScopes.exit();
 		// remove import symbols from the scope

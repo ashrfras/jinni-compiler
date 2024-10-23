@@ -16,7 +16,14 @@ for (const workername in workers) {
 }
 
 app.use(express.static('.', {
-	extensions: ['js', 'html', 'جني', 'css'],
+	extensions: ['js', 'mjs', 'html', 'جني', 'css'],
+	setHeaders: function (res, path, stat) {
+		if (path.includes('.جني')) { res.type('application/javascript') }
+	}
+}));
+
+app.use(express.static('./__خام__', {
+	extensions: ['js', 'mjs', 'html', 'جني', 'css'],
 	setHeaders: function (res, path, stat) {
 		if (path.includes('.جني')) { res.type('application/javascript') }
 	}

@@ -1,13 +1,19 @@
-#!/usr/bin/env node
+//const fs = require('fs');
+//const path = require('path');
+//const { exec, spawn } = require('child_process');
+//const util = require('util');
+import fs from 'fs';
+import path from 'path';
+import { exec, spawn } from 'child_process'
+import util from 'util';
 
-const fs = require('fs');
-const path = require('path');
-const { exec, spawn } = require('child_process');
-const util = require('util');
+//const vfs = require('./vfs');
+//const createParser = require('./jparser');
+import vfs from './vfs.mjs';
 
-const createParser = require('./jparser');
-const ErrorManager = require('./ErrorManager');
-const ImportManager = require('./ImportManager');
+import { createParser } from './jparser.mjs';
+import ErrorManager from './ErrorManager.mjs';
+import ImportManager from './ImportManager.mjs';
 
 // promisify exec
 const execPromise = util.promisify(exec);
@@ -51,8 +57,13 @@ const projectPath = path.resolve(path.dirname(mainFilePath));
 const fileName = path.basename(mainFilePath, '.جني');
 const outPath = path.join(projectPath, '__خام__');
 
+vfs.mainFilePath = mainFilePath;
+vfs.projectPath = projectPath;
+vfs.outputPath = outPath;
+
 if (is_nocompile) {
-	return runScript();
+	runScript();
+	process.exit();
 }
 
 
@@ -119,14 +130,14 @@ if (is_web) {
 	// template index.html
 	var indexhtml;
 	try {
-		indexhtml = fs.readFileSync(path.join(__dirname, './templates/index.html'), 'utf8');
+		indexhtml = fs.readFileSync(path.join(vfs.execdir(), './templates/index.html'), 'utf8');
 	} catch (error) {
 		console.error('فشلت قرائة الملف: ', error);
 	}
 	// template server.mjs
 	var serverjs;
 	try {
-		serverjs = fs.readFileSync(path.join(__dirname, './templates/server.mjs'), 'utf8');
+		serverjs = fs.readFileSync(path.join(vfs.execdir(), './templates/server.mjs'), 'utf8');
 	} catch (error) {
 		console.error('فشلت قرائة الملف: ', error);
 	}
@@ -135,7 +146,7 @@ if (is_web) {
 	// template package.json
 	var packagejson;
 	try {
-		packagejson = fs.readFileSync(path.join(__dirname, './templates/package.json'), 'utf8');
+		packagejson = fs.readFileSync(path.join(vfs.execdir(), './templates/package.json'), 'utf8');
 	} catch (error) {
 		console.error('فشلت قرائة الملف: ', error);
 	}

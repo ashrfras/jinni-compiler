@@ -1,6 +1,6 @@
-const Symbol = require('./Symbol');
+import Symbol from './Symbol.mjs';
 
-class Scope {
+export class Scope {
 	symbols;
 	sourceFile; // source filename like bar
 	importName; // full import name like foor.bar
@@ -57,4 +57,4 @@ class Scope {
 	
 }
 
-module.exports = Scope;
+export default Scope;

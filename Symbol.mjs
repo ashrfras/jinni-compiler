@@ -1,6 +1,6 @@
-const ErrorManager = require('./ErrorManager');
+import ErrorManager from './ErrorManager.mjs';
 
-class Symbol {
+export class Symbol {
 	// Automatically import these types in every source
 	static AUTOIMPORTS = ['عدد', 'منطق', 'مصفوفة', 'نصية', 'نوعبنية', 'نوعمركب', 'نوعتعداد', 'تاريخ'];
 	
@@ -527,4 +527,4 @@ class Symbol {
 	}
 }
 
-module.exports = Symbol;
+export default Symbol;

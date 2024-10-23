@@ -1,4 +1,4 @@
-class ErrorManager {
+export class ErrorManager {
 	static errorRegistry = [];
 	static lineShift = {}; // we save line shifting over files
 	static isBlocking = false; // is there a blocking error in our registry
@@ -69,7 +69,7 @@ class ErrorManager {
 	}
 }
 
-class Error {
+export class Error {
 	static WARNING = 0;
 	static BLOCKING = 1;
 	static PROBABLE = 2;
@@ -116,4 +116,4 @@ class Error {
 	
 }
 
-module.exports = ErrorManager;
+export default ErrorManager;

@@ -1,11 +1,10 @@
-const fs = require('fs');
-const fsp = require('fs').promises;
-const Path = require('path');
-const ErrorManager = require('./ErrorManager');
-const Scope = require('./Scope');
-const Symbol = require('./Symbol');
+import vfs from './vfs.mjs';
+import ErrorManager from './ErrorManager.mjs';
+import Scope from './Scope.mjs';
+import Symbol from './Symbol.mjs';
+import { createParser } from './jparser.mjs';
 
-class ImportManager {
+export class ImportManager {
 	static importedScopes = [];
 	static openScopes = []; // currently open files
 	static toReparse = []; // files with circular dependancy to reparse
@@ -20,20 +19,19 @@ class ImportManager {
 		ImportManager.outputPath = ctx.outPath;
 	}
 	
-	static async addStringImport (imp, fromFilePath) {
+	static addStringImport (imp, fromFilePath) {
 		if (imp.startsWith('//')) {
 			// nothing to do here, but import is correct
 		} else if (imp.startsWith('/')) {
 			// this is a local file, copy it to the project out
-			var source = Path.join(Path.dirname(fromFilePath), imp);
-			try {
-				await fsp.access(source);
-			} catch (err) {
-				console.log(err);
+			var sourcePath = vfs.joinPath(vfs.dirname(fromFilePath), imp);
+			var fileExist = vfs.fileExist(sourcePath);
+			if (!sourcePath) {
 				ErrorManager.error("ملف الئيراد غير موجود: " + imp);
 			}
-			var destination = Path.join(ImportManager.outputPath, imp);
-			await fsp.copyFile(source, destination);
+			
+			var destination = vfs.joinPath(ImportManager.outputPath, imp);
+			vfs.copyFile(sourcePath, destination);
 		} else {
 			// also nothing to do here, this is not an error anymore
 			// I'm keeping these if else for clarity reasons
@@ -49,7 +47,6 @@ class ImportManager {
 			ErrorManager.error(findName + " ليس ئسم ئيراد صالح");
 			return;
 		}
-		
 		// check if currently open => circular dependancy
 		// don't parse an already open file
 		// just return the symbol as منوع
@@ -109,7 +106,6 @@ class ImportManager {
 		
 			// this is not a string, this is not a URL import
 			var myFileImp = ImportManager.getImportInfo(imp, findName);
-			
 			if (myFileImp.exists) {
 				if (myFileImp.path == fromFilePath) {
 					ErrorManager.warning('تم تجاهل ئيراد لنفس الملف الحالي');
@@ -182,8 +178,8 @@ class ImportManager {
 		// imports can be relative to project path to current file
 		// if not, they are relative to the compiler executable
 		var projectBase = ImportManager.projectPath;
-		var compilerBase = __dirname;
-		
+		var compilerBase = vfs.execdir();
+
 		// look in the current project path
 		var ret = ImportManager._getImportInfo(impPath, projectBase, findName);
 		if (!ret.exists) {
@@ -201,57 +197,60 @@ class ImportManager {
 		var myImport = impPath.replaceAll('.', '/');
 		
 		// try to find like /projectPath/مستورد.جني
-		var filePath1 = Path.join(basePath, myImport + '.جني');
+		var filePath1 = vfs.joinPath(basePath, myImport + '.جني');
 		// or find like /projectPath/مستورد/مستورد.جني
-		var filePath2 = Path.join(basePath, myImport, name + '.جني');
+		var filePath2 = vfs.joinPath(basePath, myImport);
+		filePath2 = vfs.joinPath(filePath2, name + '.جني');
 		// or find like /projectPath/ئساسية/مستورد.جني
-		var filePath3 = Path.join(basePath, 'ئساسية', name + '.جني');
+		var filePath3 = vfs.joinPath(basePath, 'ئساسية');
+		filePath3 = vfs.joinPath(filePath3, name + '.جني');
 		// or if findName find like /projectPath/ئساسية/جيزن.جني
 		var filePath4 = null;
 		if (findName) {
-			filePath4 = Path.join(basePath, myImport, findName + '.جني');
+			filePath4 = vfs.joinPath(basePath, myImport);
+			filePath4 = vfs.joinPath(filePath4, findName + '.جني');
 		}
 		
-		try {
-			fs.statSync(filePath1);
+		var exist = vfs.fileExist(filePath1);
+		if (exist) {
 			return {
 				exists: true,
 				path: filePath1,
 				relativePath: '.' + filePath1.replace(basePath, ''),
 				importName: impPath
 			}
-		} catch (err) {}
+		}
 		
-		try {
-			fs.statSync(filePath2);
+		exist = vfs.fileExist(filePath2);
+		if (exist) {
 			return {
 				exists: true,
 				path: filePath2,
 				relativePath: '.' + filePath2.replace(basePath, ''),
 				importName: impPath + '.' + name
 			}
-		} catch (err) {}
+		}
 		
-		try {
-			fs.statSync(filePath3);
+		exist = vfs.fileExist(filePath3);
+		if (exist) {
 			return {
 				exists: true,
 				path: filePath3,
 				relativePath: '.' + filePath3.replace(basePath, ''),
 				importName: 'ئساسية.' + name
 			}
-		} catch (err) {}
+		}
 		
 		if (filePath4) {
-			try {
-				fs.statSync(filePath3);
+			exist = vfs.fileExist(filePath4);
+			if (exist) {
 				return {
 					exists: true,
 					path: filePath4,
 					relativePath: '.' + filePath4.replace(basePath, ''),
 					importName: impPath + '.' + findName
 				}
-			} catch (err) {}
+			}
 		}
 
 		return {
@@ -272,14 +271,12 @@ class ImportManager {
 	
 	// read and parse an imported file
 	static readAndParseFile(filePath) {
-		filePath = Path.resolve(filePath);
-		var fileContent;
-		try {
-			fileContent = fs.readFileSync(filePath, 'utf8');
-		} catch (e) {
+		filePath = vfs.resolve(filePath);
+		var fileContent = vfs.readFile(filePath);
+		if (!fileContent) {
 			ErrorManager.error("تعدر ئيراد الوحدة: " + filePath);
 		}
-		const createParser = require('./jparser');
+		
 		const parser = createParser();
 		
 		try {
@@ -304,4 +301,5 @@ class ImportManager {
 	
 }
 
-module.exports = ImportManager;
+//module.exports = ImportManager;
+export default ImportManager;

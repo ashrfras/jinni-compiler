@@ -1,11 +1,8 @@
-const fs = require('fs');
-const path = require('path');
+import ErrorManager from './ErrorManager.mjs';
+import Symbol from './Symbol.mjs';
+import Scope from './Scope.mjs'
 
-const ErrorManager = require('./ErrorManager');
-const Symbol = require('./Symbol');
-const Scope = require('./Scope');
-
-class SymbolScopes {
+export class SymbolScopes {
 	scopeStack; // as Scope
 	
 	// this takes a fileName, an returns an autoimport code to add to it
@@ -211,4 +208,4 @@ class SymbolScopes {
 	
 }
 
-module.exports = SymbolScopes;
+export default SymbolScopes;
