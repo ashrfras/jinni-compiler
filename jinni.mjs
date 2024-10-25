@@ -86,7 +86,7 @@ try {
 
 try {
 	const parser = createParser();
-	const result = parser.parse(code, {
+	const result = await parser.parse(code, {
 		filePath: mainFilePath,
 		projectPath: projectPath,
 		outPath: outPath
@@ -107,7 +107,7 @@ try {
 
 try {
 	const parser = createParser();
-	const result = parser.parse(code, {
+	const result = await parser.parse(code, {
 		filePath: workerFilePath,
 		projectPath: projectPath,
 		outPath: outPath

@@ -19,19 +19,19 @@ export class ImportManager {
 		ImportManager.outputPath = ctx.outPath;
 	}
 	
-	static addStringImport (imp, fromFilePath) {
+	static async addStringImport (imp, fromFilePath) {
 		if (imp.startsWith('//')) {
 			// nothing to do here, but import is correct
 		} else if (imp.startsWith('/')) {
 			// this is a local file, copy it to the project out
 			var sourcePath = vfs.joinPath(vfs.dirname(fromFilePath), imp);
-			var fileExist = vfs.fileExist(sourcePath);
+			var fileExist = await vfs.fileExist(sourcePath);
 			if (!sourcePath) {
 				ErrorManager.error("ملف الئيراد غير موجود: " + imp);
 			}
 			
 			var destination = vfs.joinPath(ImportManager.outputPath, imp);
-			vfs.copyFile(sourcePath, destination);
+			await vfs.copyFile(sourcePath, destination);
 		} else {
 			// also nothing to do here, this is not an error anymore
 			// I'm keeping these if else for clarity reasons
@@ -41,7 +41,7 @@ export class ImportManager {
 	
 	// imp is import path
 	// fromFilePath is path of file from which import occuring
-	static addImport (imp, fromFilePath, findName = null) {
+	static async addImport (imp, fromFilePath, findName = null) {
 		// validate findName
 		if (findName && findName.includes('.')) {
 			ErrorManager.error(findName + " ليس ئسم ئيراد صالح");
@@ -72,7 +72,7 @@ export class ImportManager {
 			if (!isAutoImport) {
 				ImportManager.openScopes.pop();
 			}
-			var info = ImportManager.getImportInfo(imp);
+			var info = await ImportManager.getImportInfo(imp);
 			scope.importName = '/' + info.importName + '.mjs';
 			return scope;
 		}
@@ -105,7 +105,7 @@ export class ImportManager {
 			}
 		
 			// this is not a string, this is not a URL import
-			var myFileImp = ImportManager.getImportInfo(imp, findName);
+			var myFileImp = await ImportManager.getImportInfo(imp, findName);
 			if (myFileImp.exists) {
 				if (myFileImp.path == fromFilePath) {
 					ErrorManager.warning('تم تجاهل ئيراد لنفس الملف الحالي');
@@ -119,7 +119,7 @@ export class ImportManager {
 				}
 				var scope = {
 					name: imp,
-					scope: ImportManager.processImport(myFileImp.path, fromFilePath)
+					scope: await ImportManager.processImport(myFileImp.path, fromFilePath)
 				}
 				//scope.scope.importName = myFileImp.importName;
 				// don't add this file to importedScopes if marked to reparse
@@ -139,8 +139,8 @@ export class ImportManager {
 					ImportManager.toReparse = ImportManager.toReparse.filter((elem => fromFilePath.includes(elem.reparse)));				
 					var myimp = reparseWhen.reparse.replaceAll('/', '.').replaceAll('.جني', '');
 					var reparseScope = ImportManager.importedScopes.find(elem => myimp.includes(elem.name));
-					var myFileImp = ImportManager.getImportInfo(reparseScope.name);
-					reparseScope.scope = ImportManager.processImport(myFileImp.path, fromFilePath);
+					var myFileImp = await ImportManager.getImportInfo(reparseScope.name);
+					reparseScope.scope = await ImportManager.processImport(myFileImp.path, fromFilePath);
 				}
 				
 				return scope.scope;
@@ -148,12 +148,12 @@ export class ImportManager {
 				// import is not found locally, search and download from library
 				// and then continue just like local like: مكون.بتشدبي
 				// TODO: downloadFromLibrary();
-				myFileImp = ImportManager.getImportInfo(`مكون.${imp}`);
+				myFileImp = await ImportManager.getImportInfo(`مكون.${imp}`);
 				if (myFileImp.exists) {
 					// we have successfully downloaded component from library
 					var scope = {
 						name: imp,
-						scope: ImportManager.processImport(myFileImp.path, fromFilePath)
+						scope: await ImportManager.processImport(myFileImp.path, fromFilePath)
 					}
 					//scope.scope.importName = myFileImp.importName;
 					if (! ImportManager.toReparse.includes(fromFilePath)) {
@@ -174,23 +174,23 @@ export class ImportManager {
 		}
 	}
 	
-	static getImportInfo (impPath, findName = null) {	
+	static async getImportInfo (impPath, findName = null) {	
 		// imports can be relative to project path to current file
 		// if not, they are relative to the compiler executable
 		var projectBase = ImportManager.projectPath;
 		var compilerBase = vfs.execdir();
 
 		// look in the current project path
-		var ret = ImportManager._getImportInfo(impPath, projectBase, findName);
+		var ret = await ImportManager._getImportInfo(impPath, projectBase, findName);
 		if (!ret.exists) {
 			// look in the compiler exec path
-			ret = ImportManager._getImportInfo(impPath, compilerBase, findName);
+			ret = await ImportManager._getImportInfo(impPath, compilerBase, findName);
 		}
 		
 		return ret;
 	}
 	
-	static _getImportInfo (impPath, basePath, findName = null) {		
+	static async _getImportInfo (impPath, basePath, findName = null) {		
 		var splitted = impPath.split('.');
 		var name = splitted[splitted.length-1]; // last part is filename
 		// ئساسية.عنصر becomes ئساسية/عنصر
@@ -211,7 +211,7 @@ export class ImportManager {
 			filePath4 = vfs.joinPath(filePath4, findName + '.جني');
 		}
 		
-		var exist = vfs.fileExist(filePath1);
+		var exist = await vfs.fileExist(filePath1);
 		if (exist) {
 			return {
 				exists: true,
@@ -221,7 +221,7 @@ export class ImportManager {
 			}
 		}
 		
-		exist = vfs.fileExist(filePath2);
+		exist = await vfs.fileExist(filePath2);
 		if (exist) {
 			return {
 				exists: true,
@@ -231,7 +231,7 @@ export class ImportManager {
 			}
 		}
 		
-		exist = vfs.fileExist(filePath3);
+		exist = await vfs.fileExist(filePath3);
 		if (exist) {
 			return {
 				exists: true,
@@ -242,7 +242,7 @@ export class ImportManager {
 		}
 		
 		if (filePath4) {
-			exist = vfs.fileExist(filePath4);
+			exist = await vfs.fileExist(filePath4);
 			if (exist) {
 				return {
 					exists: true,
@@ -258,11 +258,11 @@ export class ImportManager {
 		}
 	}
 	
-	static processImport(importPath, fromFilePath) {
+	static async processImport(importPath, fromFilePath) {
 		//var fileBase = Path.dirname(fromFilePath);
 		//var importPath = Path.join(ImportManager.projectPath, relativeImportPath);
 		
-		var scope = ImportManager.readAndParseFile(importPath);
+		var scope = await ImportManager.readAndParseFile(importPath);
 		if (!scope) {
 			ErrorManager.printAll(); // this exits process
 		}
@@ -270,9 +270,9 @@ export class ImportManager {
 	}
 	
 	// read and parse an imported file
-	static readAndParseFile(filePath) {
+	static async readAndParseFile(filePath) {
 		filePath = vfs.resolve(filePath);
-		var fileContent = vfs.readFile(filePath);
+		var fileContent = await vfs.readFile(filePath);
 		if (!fileContent) {
 			ErrorManager.error("تعدر ئيراد الوحدة: " + filePath);
 		}
@@ -280,7 +280,7 @@ export class ImportManager {
 		const parser = createParser();
 		
 		try {
-			const scope = parser.parse(fileContent, {
+			const scope = await parser.parse(fileContent, {
 				filePath: filePath,
 				projectPath: ImportManager.projectPath,
 				outPath: ImportManager.outputPath

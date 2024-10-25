@@ -4,6 +4,7 @@
 	import ErrorManager from './ErrorManager.mjs';
 	import ImportManager from './ImportManager.mjs';
 	import Symbol from './Symbol.mjs';
+	export var createParser;
 %}
 
 /* lexical grammar */
@@ -115,13 +116,13 @@
 		}
 		
 		parser.originalParse = parser.parse;
-		parser.parse = function (input, ctx) {
+		parser.parse = async function (input, ctx) {
 			// here we add global imports to the input source code
 			// do not add global imports on inlineparses
 			var fileName = vfs.basename(ctx.filePath);
 			input = ( ctx.inlineParse ? '' : SymbolScopes.autoImportText(ctx.filePath) ) + input;
 			try {
-				var result = parser.originalParse(input, ctx);
+				var result = await parser.originalParse(input, ctx);
 				// result is the parsed file's global scope;
 				if (result.setSourceFile) {
 					result.setSourceFile(fileName);
@@ -145,13 +146,13 @@
 		ErrorManager.printAll();
 	}
 	
-	function inlineParse(s, context, yy) {
+	async function inlineParse(s, context, yy) {
 		if (!s.endsWith('؛')) {
 			s += '؛';
 		}
 		const _parser = createParser(yy);
 		try {
-			const scope = _parser.parse(s, {
+			const scope = await _parser.parse(s, {
 				inlineParse: true,
 				filePath: context.filePath,
 				projectPath: context.projectPath,
@@ -173,7 +174,7 @@
 	let htmatts = "مصدر:src,ئصل:rel,عنونت:href,لئجل:for,معرف:id,ستنب:placeholder,معطل:disabled,مطلوب:required,مختار:checked,محدد:selected,ئسم:name,قيمة:value,محتوا:content,صنف:class,طول:height,عرض:width,سمة:style,قابلتعديل:contenteditable"
 		.replaceAll(":", '":"').replaceAll(',', '","');
 		
-	function processJNX(src, context, yy) {
+	async function processJNX(src, context, yy) {
 		// validate it first
 		validateJNX(src);
 		
@@ -194,7 +195,7 @@
 			var rg = RegExp(`(?<=\\<((?!x-)[\\s\\S])*\\s+)${att}(?=[\\s]*=)`, 'g');
 			src = src.replace(rg, attrs[att]);
 		}
-		src = processJNXControl(src, context, yy);
+		src = await processJNXControl(src, context, yy);
 		src = src.replaceAll('_{', '${');
 		src = src.replaceAll('%{', '${');
 		return src;
@@ -204,19 +205,19 @@
 		return s.replace(RegExp('(?<=(\\<|\\<\\/))([^\x2F-\x7F]*)(?=[\\s\\>])', 'g'), 'x-$2');
 	}
 	
-	function processJNXControl(s, context, yy) {
+	async function processJNXControl(s, context, yy) {
 		var rg = RegExp('(<\\s*x-تكرار\\s*لكل\\s*\\=\\s*\\")([^\\"]*)(\\"\\s*في\\s*\\=\\s*\\")([^\\"]*)(\\"\\s*\\>)(((?!(\\<\\s*\\/\\s*x-تكرار\\s*\\>))[\\s\\S])*)(\\<\\s*\\/\\s*x-تكرار\\s*\\>)', 'g');
-		while (s != (s = s.replace(rg, "` + $4.map($2 => { return `$6` }).join('') + `"))) {}
+		//while (s != (s = s.replace(rg, "` + $4.map($2 => { return `$6` }).join('') + `"))) {}
+		s = s.replace(rg, "` + $4.map($2 => { return `$6` }).join('') + `");
+		
 		var rgCond = RegExp('(\\< *x-شرط *\\>)(((?!(\\< *\\/ *x-شرط *\\>))[\\s\\S])*)(\< *\\/ *x-شرط *\\>)', 'g');
 		var rgWhen = RegExp('(\\< *x-عند * تحقق *= *\\")([^\\"]*)(\\" *\\>)(((?!(\\< *\\/ *x-عند *\\>))[\\s\\S])*)(\\< *\\/ *x-عند *\\>)', 'g');
 		var rgElse = RegExp('(\\< *x-عند * غيره *\\>)(((?!(\\< *\\/ *x-عند *\\>))[\\s\\S])*)(\\< *\\/ *x-عند *\\>)', 'g');
-		while (s != (
-			s = s.replace(rgCond, "` + ($2 '') + `").
-				replace(rgWhen, function ($0, $1, $2, $3, $4) {
-					var result = inlineParse($2.replace('<x-', '<'), context, yy) + " ? `" + $4 + "` :";
-					return result;
-				}).replace(rgElse, "`$2` +")
-		)) {}
+		
+		s = s.replace(rgCond, "` + ($2 '') + `");
+		s = await asyncReplace(s, rgWhen, context, yy);
+		s = s.replace(rgElse, "`$2` +");
+		
 		return '`' + s + '`';
 	}
 	
@@ -267,6 +268,34 @@
             function(a) { return a.charCodeAt(0) & 0xf }
         )
     }
+	
+	async function asyncReplace(s, rgWhen, context, yy) {
+		// Step 1: Find all matches and collect the async tasks
+		const tasks = [];
+		const matches = [];
+	  
+		s.replace(rgWhen, (match, $1, $2, $3, $4) => {
+			// Collect the matches for later use in the final replacement
+			matches.push({ match, $1, $2, $3, $4 });
+		
+			// Collect the inlineParse promises
+			tasks.push(inlineParse($2.replace('<x-', '<'), context, yy));
+			return ''; // This return is irrelevant, just a placeholder
+		});
+
+		// Step 2: Wait for all inlineParse promises to resolve
+		const results = await Promise.all(tasks);
+
+		// Step 3: Apply the replacements
+		let resultString = s;
+		matches.forEach(({ match, $1, $2, $3, $4 }, index) => {
+			const parsedResult = results[index] + " ? `" + $4 + "` :";
+			// Perform the replacement
+			resultString = resultString.replace(match, parsedResult);
+		});
+
+		return resultString;
+	}
 %}
 
 
@@ -312,7 +341,7 @@ program
 		let fileName = vfs.relativeBasePath(context.filePath);
 		let outFilePath = vfs.outputFilePath(fileName);
 		
-		vfs.writeFile(outFilePath, result);
+		await vfs.writeFile(outFilePath, result);
 		
 		// get global scope
 		var glob = yy.symbolScopes.exit();
@@ -388,15 +417,15 @@ import_statement
 		// it will look for جيزن in path ئساسية/جيزن.جني
 		// since it will not find neither ئساسية.جني nor ئساسية/ئساسية.جني
 		if (importSpecifier.find.length == 1) {
-			scope = ImportManager.addImport($4, context.filePath, importSpecifier.find);
+			scope = await ImportManager.addImport($4, context.filePath, importSpecifier.find);
 		} else {
-			scope = ImportManager.addImport($4, context.filePath);
+			scope = await ImportManager.addImport($4, context.filePath);
 		}
 		
 		if (importSpecifier.find == 'all') {
 			var mySymb;
 			if (!scope) { // string import
-				ImportManager.addStringImport($4.replaceAll("'", "").replaceAll('"', ''), context.filePath);
+				await ImportManager.addStringImport($4.replaceAll("'", "").replaceAll('"', ''), context.filePath);
 				mySymb = yy.symbolScopes.declareSymbol(importSpecifier.add, 'مجهول');
 			} else {
 				var name = importSpecifier.add;
@@ -415,7 +444,7 @@ import_statement
 			}
 		} else {
 			if (!scope) { // string import
-				ImportManager.addStringImport($4.replaceAll("'", "").replaceAll('"', ''), context.filePath);
+				await ImportManager.addStringImport($4.replaceAll("'", "").replaceAll('"', ''), context.filePath);
 				importSpecifier.add.forEach((add) => {
 					yy.symbolScopes.declareSymbol(add, 'مجهول');
 				});
@@ -478,7 +507,8 @@ import_statement
 		ImportManager.setContext(context);
 		var importNames = $2.split(', ');
 		var result = '';
-		importNames.forEach (impName => {
+		for (var i=0; i<importNames.length; i++) {
+			var impName = importNames[i];
 			var scope;
 			var lastPart; // = bar in import foo.bar
 			if (impName.includes('.')) {
@@ -486,10 +516,10 @@ import_statement
 				// ex: import foo.bar becomes like import bar from foo.bar
 				var lastPart = impName.split('.');
 				lastPart = lastPart[lastPart.length-1];
-				scope = ImportManager.addImport(impName, context.filePath, lastPart);
+				scope = await ImportManager.addImport(impName, context.filePath, lastPart);
 			} else {
 				lastPart = impName;
-				scope = ImportManager.addImport(impName, context.filePath);
+				scope = await ImportManager.addImport(impName, context.filePath);
 			}
 			var symb = scope.getSymbolByName(lastPart);
 			if (!symb) {
@@ -502,8 +532,14 @@ import_statement
 			var exp = lastPart;
 			var sep = result == '' ? '' : ';';
 			result += sep + 'import {' + lastPart + '} from "' + imp + '";'// + '; export {' + exp + '}';
-		});
+		}
 		$$ = result;
+	}
+	| IMPORT STRING {
+		ErrorManager.setContext(@1, context.filePath);
+		ImportManager.setContext(context);
+		await ImportManager.addStringImport($2.replaceAll("'", "").replaceAll('"', ''), context.filePath);
+		$$ = ''; // nonfunctional import just for the parser
 	}
 	;
 import_specifier
@@ -2417,7 +2453,7 @@ expression
 			let s = match[1];
 			if (s != '') {
 				var mys = s.replaceAll('\\(', '(').replaceAll('\\)', ')');
-				var res = inlineParse(mys, context, yy);
+				var res = await inlineParse(mys, context, yy);
 				origins.push(mys);
 				replace.push(res);
 			}
@@ -2474,13 +2510,13 @@ expression
 			let s = match[1];
 			if (s != '') {
 				var mys = s.replaceAll('\\(', '(').replaceAll('\\)', ')');
-				var res = inlineParse(mys, context, yy);
+				var res = await inlineParse(mys, context, yy);
 				origins.push(mys);
 				replace.push(res);
 			}
 		}
 		
-		result = processJNX(result, context, yy);
+		result = await processJNX(result, context, yy);
 		
 		for (var i=0; i<origins.length; i++) {
 			result = result.replace(origins[i], replace[i]);
@@ -2493,5 +2529,3 @@ expression
     ;
 
 %%
-
-module.exports = createParser;

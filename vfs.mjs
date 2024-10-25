@@ -1,9 +1,17 @@
-import fs from 'fs';
-import fsp from 'fs/promises';
-import path from 'path';
+let fs, fsp, path, fileURLToPath, dirname;
+let PouchDB;
 
-import { fileURLToPath } from 'url';
-import { dirname } from 'path';
+if (isNode()) {
+    fs = await import('fs');
+    fsp = await import('fs/promises');
+    path = await import('path');
+    fileURLToPath = await import('url').then(mod => mod.fileURLToPath);
+    dirname = await import('path').then(mod => mod.dirname);
+}
+
+if (isBrowser()) {
+	PouchDB = await import('./مكون.بتشدبي.mjs').then(mod => mod.بتشدبي);
+}
 
 const SRCDBNAME = 'jinni:';
 const BINDBNAME = 'jinnibin:';
@@ -24,6 +32,7 @@ export class vfs {
 	}
 	static مجلدتنفيد = vfs.execdir;
 	
+	
 	// gives the exact file name without extension
 	static basename (fpath) {
 		if (isNode()) {
@@ -35,6 +44,7 @@ export class vfs {
 		}
 	}
 	static مجلدئساس = vfs.basename;
+	
 	
 	// gives project path from given main file path
 	// on browser project path is dbname:
@@ -50,6 +60,7 @@ export class vfs {
 		return vfs.projectPath;
 	}
 	static ردمجلدمشروع = vfs.getProjectPath;
+	
 	
 	// gives dotted file path relative to project
 	// like ئساسية.نصية.mjs
@@ -79,6 +90,7 @@ export class vfs {
 	}
 	static ئسملفنسبي = vfs.relativeBasePath;
 	
+	
 	// gives output (compiled bin) path from given main file path
 	// on browser, output path is output dbname
 	static getOutputPath (mainfilepath) {
@@ -95,6 +107,7 @@ export class vfs {
 	}
 	static ردمجلدخام = vfs.getOutputPath;
 	
+	
 	// returns the full path of the compiled output file
 	static outputFilePath (fileName) {
 		if (isNode()) {
@@ -105,53 +118,6 @@ export class vfs {
 	}
 	static مسارملفخام = vfs.outputFilePath;
 	
-	static writeFile (filePath, content) {
-		if (isNode()) {
-			fs.writeFile(filePath, content, { flag: 'w+' }, (err) => {
-				if (err) {
-					throw new Error('فشل حفض الملف: ' + filePath);
-				}
-			});	
-		} else if (isBrowser()) {
-			var dbName = vfs.getDbName(filePath);
-			var myDb = new PouchDB(dbName);
-			//var nodbPath = vfs.getNodbPath(filePath);
-			var fulfilled = false;
-			myDb.put({
-				_id: filePath,
-				content
-			}).then(() => fulfilled = true);
-			
-			while (!fulfilled) {}; // wait for promise, bad but for compatibility
-		}
-	}
-	static ئكتبملف = vfs.writeFile;
-	
-	static readFile (filePath) {
-		if (isNode()) {
-			try {
-				return fs.readFileSync(filePath, 'utf8');
-			} catch (e) {
-				return false;
-			}
-		} else if (isBrowser()) {
-			var dbName = vfs.getDbName(filePath);
-			var myDb = new PouchDB(dbName);
-			var fulfilled = false;
-			var myDoc;
-			myDb.get(filePath).then((doc) => {
-				fulfilled = true;
-				myDoc = doc;
-			});
-			while (!fulfilled) {}; // wait for promise, bad but for compatibility
-			if (myDoc) {
-				return myDoc.content;
-			} else {
-				return false;
-			}
-		}
-	}
-	static ئقرئملف = vfs.readFile;
 	
 	static getDbName (filePath) {
 		if (!filePath.includes(':')) {
@@ -161,6 +127,7 @@ export class vfs {
 		return splitted[0];
 	}
 	static ردئسمقاب = vfs.getDbName;
+	
 	
 	// get filepath without db part
 	static getNoDbPath (filePath) {
@@ -173,34 +140,17 @@ export class vfs {
 	}
 	static مساربلاقاب = vfs.getNoDbPath;
 	
-	// removes dir/db at given path and/to recreate empty one
-	static remakeDir (dirPath) {
-		if (isNode()) {
-			try {
-				fs.rmSync(dirPath, { recursive: true });
-			} catch (err) {
-			} finally {
-				fs.mkdirSync(dirPath);
-			}
-		} else if (isBrowser()) {
-			var dbName = vfs.getDbName(dirPath);
-			var myDb = new PouchDB(dbName);
-			var fulfilled = false;
-			myDb.destroy().then(() => fulfilled = true);
-			while (!fulfilled) {}; // wait for promise, bad but for compatibility
-		}
-	}
-	static ئعدئنشائ = vfs.remakeDir;
 	
 	static joinPath (elem1, elem2) {
 		if (isNode()) {
 			return path.join(elem1, elem2);
 		} else if (isBrowser()) {
 			var str = elem1 + '/' + elem2;
-			return str.replaceAll('//', '/').replaceAll(':/', '/');
+			return str.replaceAll('//', '/').replaceAll(':/', ':');
 		}
 	}
 	static ئدمجمسار = vfs.joinPath;
+	
 	
 	// directory path of the given filepath
 	static dirname (filepath) {
@@ -213,6 +163,7 @@ export class vfs {
 		}
 	}
 	static ئسمجلد = vfs.dirname;
+	
 	
 	static resolve (filePath) {
 		if (isNode()) {
@@ -227,44 +178,112 @@ export class vfs {
 	}
 	static حلل = vfs.resolve;
 	
-	static fileExist (filePath) {
+	
+	
+	static async writeFile (filePath, content) {
 		if (isNode()) {
-			return fs.existsSync(filePath);
+			try {
+				await fsp.writeFile(filePath, content, { flag: 'w+' });
+			} catch (e) {
+				throw new Error('فشل حفض الملف: ' + filePath);
+			}
+		} else if (isBrowser()) {
+			var dbName = vfs.getDbName(filePath);
+			var myDb = new PouchDB(dbName);
+			myDb = myDb['بتش'];
+			//var nodbPath = vfs.getNodbPath(filePath);
+			await myDb.put({
+				_id: filePath,
+				content
+			});
+		}
+	}
+	static ئكتبملف = vfs.writeFile;
+	
+	
+	
+	static async readFile (filePath) {
+		if (isNode()) {
+			try {
+				return await fsp.readFile(filePath, 'utf8');
+			} catch (e) {
+				return false;
+			}
+		} else if (isBrowser()) {
+			var dbName = vfs.getDbName(filePath);
+			var myDb = new PouchDB(dbName);
+			myDb = myDb['بتش'];
+			var fulfilled = false;
+			var myDoc = await myDb.get(filePath);
+			if (myDoc) {
+				return myDoc.content;
+			} else {
+				return false;
+			}
+		}
+	}
+	static ئقرئملف = vfs.readFile;
+	
+	
+	// removes dir/db at given path and/to recreate empty one
+	static async remakeDir (dirPath) {
+		if (isNode()) {
+			try {
+				await fsp.rm(dirPath, { recursive: true });
+			} catch (err) {
+			} finally {
+				fs.mkdirSync(dirPath);
+			}
+		} else if (isBrowser()) {
+			var dbName = vfs.getDbName(dirPath);
+			var myDb = new PouchDB(dbName);
+			myDb = myDb['بتش'];
+			await myDb.destroy();
+		}
+	}
+	static ئعدئنشائ = vfs.remakeDir;
+
+	
+	
+	static async fileExist (filePath) {
+		if (isNode()) {
+			try {
+				await fsp.access(filePath);
+				return true;
+			} catch (err) {
+				return false;
+			}
 		} else if (isBrowser()) {
 			// we'll search in jinni db if module exist
 			var dbName = vfs.getDbName(filePath);
 			var myDb = new PouchDB(dbName);
-			var fulfilled = false;
-			var resp;
-			myDb.get(filePath).then((res) => {
-				fulfilled = true;
-				resp = res;
-			});
-			while (!fulfilled) {}; // wait for promise, bad but for compatibility
-			return (resp ? true : false);
+			myDb = myDb['بتش'];
+			try {
+				await myDb.get(filePath);
+				return true;
+			} catch (err) {
+				return false;
+			}
 		}
 	}
 	static ملفموجود = vfs.fileExist;
 	
-	static copyFile (srcPath, dstPath) {
+	
+	
+	static async copyFile (srcPath, dstPath) {
 		if (isNode()) {
-			fs.copyFileSync(srcPath, dstPath);
+			await fsp.copyFile(srcPath, dstPath);
 		} else if (isBrowser()) {
 			var srcDb = vfs.getDbName(srcPath);
 			var dstDb = vfs.getDbName(dstPath);
 			var mySrcDb = new PouchDb(srcDb);
+			mySrcDb = mySrcDb['بتش'];
 			var myDstDb = new PouchDb(dstDb);
-			var fulfilled = 0;
-			var mySrcDoc, myDstDoc;
-			mySrcDb.get(srcPath).then((doc) => {
-				fulfilled++;
-				mySrcDoc = doc;
-			});
-			myDstDb.get(dstPath).then((doc) => {
-				fulfilled++;
-				myDstDoc = doc;
-			});
-			while (fulfilled < 2) {}; // wait for promises, bad but for compatibility
+			myDstDb = myDstDb['بتش'];
+			
+			var mySrcDoc = await mySrcDb.get(srcPath);
+			var myDstDoc = await myDstDb.get(dstPath);
+			
 			var record = {
 				_id: dstPath,
 				content: mySrcDoc.content,
@@ -272,11 +291,8 @@ export class vfs {
 			if (myDstDoc) {
 				record._version = myDstDoc._version
 			}
-			fulfilled = false;
-			myDstDb.put(record).then(() => {
-				fulfilled = true;
-			});
-			while (!fulfilled) {}; // wait for promises, bad but for compatibility
+
+			await myDstDb.put(record);
 		}
 	}
 	static ئنسخملف = vfs.copyFile;
