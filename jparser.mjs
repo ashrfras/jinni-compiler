@@ -99,7 +99,6 @@ case 1:
 		}
 		let fileName = vfs.relativeBasePath(context.filePath);
 		let outFilePath = vfs.outputFilePath(fileName);
-		
 		await vfs.writeFile(outFilePath, result);
 		
 		// get global scope
@@ -976,7 +975,7 @@ case 105:
 
 		ErrorManager.setContext(_$[$0-1], context.filePath);
 		// دع ب
-		yy.symbolScopes.declareSymbol($$[$0], 'منوع');
+		yy.symbolScopes.declareSymbol($$[$0], 'مجهول');
         this.$ = 'let ' + $$[$0]; 
     
 break;
@@ -984,7 +983,7 @@ case 106:
 
 		ErrorManager.setContext(_$[$0-3], context.filePath);
 		// دع ب = 4
-		var mySymb = yy.symbolScopes.declareSymbol($$[$0-2], 'منوع', $$[$0].symb.isArray);
+		var mySymb = yy.symbolScopes.declareSymbol($$[$0-2], 'مجهول', $$[$0].symb.isArray);
 		if ($$[$0].symb.typeIs('نوعبنية') || $$[$0].symb.typeIs('نوعمركب')) {
 			// mySymb is generic (munawaa) add struct memebers to it
 			mySymb.members = $$[$0].symb.members;
@@ -2566,15 +2565,21 @@ _handle_error:
 	async function processJNXControl(s, context, yy) {
 		var rg = RegExp('(<\\s*x-تكرار\\s*لكل\\s*\\=\\s*\\")([^\\"]*)(\\"\\s*في\\s*\\=\\s*\\")([^\\"]*)(\\"\\s*\\>)(((?!(\\<\\s*\\/\\s*x-تكرار\\s*\\>))[\\s\\S])*)(\\<\\s*\\/\\s*x-تكرار\\s*\\>)', 'g');
 		//while (s != (s = s.replace(rg, "` + $4.map($2 => { return `$6` }).join('') + `"))) {}
-		s = s.replace(rg, "` + $4.map($2 => { return `$6` }).join('') + `");
+		do {
+			var prevs = s;
+			s = s.replace(rg, "` + $4.map($2 => { return `$6` }).join('') + `");
+		} while (prevs != s);
 		
 		var rgCond = RegExp('(\\< *x-شرط *\\>)(((?!(\\< *\\/ *x-شرط *\\>))[\\s\\S])*)(\< *\\/ *x-شرط *\\>)', 'g');
 		var rgWhen = RegExp('(\\< *x-عند * تحقق *= *\\")([^\\"]*)(\\" *\\>)(((?!(\\< *\\/ *x-عند *\\>))[\\s\\S])*)(\\< *\\/ *x-عند *\\>)', 'g');
 		var rgElse = RegExp('(\\< *x-عند * غيره *\\>)(((?!(\\< *\\/ *x-عند *\\>))[\\s\\S])*)(\\< *\\/ *x-عند *\\>)', 'g');
 		
-		s = s.replace(rgCond, "` + ($2 '') + `");
-		s = await asyncReplace(s, rgWhen, context, yy);
-		s = s.replace(rgElse, "`$2` +");
+		do {
+			var prevs = s;
+			s = s.replace(rgCond, "` + ($2 '') + `");
+			s = await asyncReplace(s, rgWhen, context, yy);
+			s = s.replace(rgElse, "`$2` +");
+		} while (prevs != s);
 		
 		return '`' + s + '`';
 	}

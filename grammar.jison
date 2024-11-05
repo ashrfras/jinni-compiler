@@ -130,7 +130,7 @@
 				return result;
 			} catch (e) {
 				// exception while parsing, lets show errors
-				console.log(e);
+				//console.log(e);
 				ErrorManager.printAll();
 			}
 		}
@@ -160,7 +160,7 @@
 			});
 			return scope;
 		} catch (e) {
-			console.log(e);
+			//console.log(e);
 			ErrorManager.printAll();
 		}
 	}
@@ -208,15 +208,21 @@
 	async function processJNXControl(s, context, yy) {
 		var rg = RegExp('(<\\s*x-تكرار\\s*لكل\\s*\\=\\s*\\")([^\\"]*)(\\"\\s*في\\s*\\=\\s*\\")([^\\"]*)(\\"\\s*\\>)(((?!(\\<\\s*\\/\\s*x-تكرار\\s*\\>))[\\s\\S])*)(\\<\\s*\\/\\s*x-تكرار\\s*\\>)', 'g');
 		//while (s != (s = s.replace(rg, "` + $4.map($2 => { return `$6` }).join('') + `"))) {}
-		s = s.replace(rg, "` + $4.map($2 => { return `$6` }).join('') + `");
+		do {
+			var prevs = s;
+			s = s.replace(rg, "` + $4.map($2 => { return `$6` }).join('') + `");
+		} while (prevs != s);
 		
 		var rgCond = RegExp('(\\< *x-شرط *\\>)(((?!(\\< *\\/ *x-شرط *\\>))[\\s\\S])*)(\< *\\/ *x-شرط *\\>)', 'g');
 		var rgWhen = RegExp('(\\< *x-عند * تحقق *= *\\")([^\\"]*)(\\" *\\>)(((?!(\\< *\\/ *x-عند *\\>))[\\s\\S])*)(\\< *\\/ *x-عند *\\>)', 'g');
 		var rgElse = RegExp('(\\< *x-عند * غيره *\\>)(((?!(\\< *\\/ *x-عند *\\>))[\\s\\S])*)(\\< *\\/ *x-عند *\\>)', 'g');
 		
-		s = s.replace(rgCond, "` + ($2 '') + `");
-		s = await asyncReplace(s, rgWhen, context, yy);
-		s = s.replace(rgElse, "`$2` +");
+		do {
+			var prevs = s;
+			s = s.replace(rgCond, "` + ($2 '') + `");
+			s = await asyncReplace(s, rgWhen, context, yy);
+			s = s.replace(rgElse, "`$2` +");
+		} while (prevs != s);
 		
 		return '`' + s + '`';
 	}
@@ -495,10 +501,11 @@ import_statement
 				$$ = 'import ' + $2.value + ' from "' + imp + '";' //export ' + exp; 
 			}
 		} else {
-			var imp = '.' + scope.getImportName();
+			var imp = './' + scope.getImportName();
 			//if (scope.getSourceFile() && (!$4.endsWith(scope.getSourceFile()))) {
 			//	imp = './' + $4 + '.' + scope.getSourceFile() + '.mjs';
 			//}
+			imp = imp.replaceAll('//', '/');
 			$$ = 'import ' + $2.value + ' from "' + imp + '";'// + '; export ' + exp;
 		}
 	}
@@ -528,7 +535,8 @@ import_statement
 			// TODO REVIEW symb.name = sym.add
 			symb.isImport = true;
 			yy.symbolScopes.addSymbol(symb);
-			var imp = '.' + scope.getImportName();
+			var imp = './' + scope.getImportName();
+			imp = imp.replaceAll('//', '/');
 			var exp = lastPart;
 			var sep = result == '' ? '' : ';';
 			result += sep + 'import {' + lastPart + '} from "' + imp + '";'// + '; export {' + exp + '}';
@@ -1275,7 +1283,7 @@ var_declaration
     : DEF IDENTIFIER {
 		ErrorManager.setContext(@1, context.filePath);
 		// دع ب
-		yy.symbolScopes.declareSymbol($2, 'منوع');
+		yy.symbolScopes.declareSymbol($2, 'مجهول');
         $$ = 'let ' + $2; 
     }
     | DEF IDENTIFIER '=' expression {

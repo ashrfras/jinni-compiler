@@ -55,7 +55,11 @@ export class ImportManager {
 		// is this an automatically imported file?
 		var impname = imp.split('.');
 		impname = impname[impname.length-1];
-		var isAutoImport = imp == 'ئساسية.بدائي' || (imp.includes('ئساسية') && Symbol.AUTOIMPORTS.includes(impname))
+		// import info
+		var info = await ImportManager.getImportInfo(imp);
+		imp = info.importName || imp;
+		
+		var isAutoImport = imp == 'ئساسية.بدائي' || (imp.includes('ئساسية') && Symbol.AUTOIMPORTS.includes(impname));
 		var openScope = ImportManager.openScopes.find((s) => s.name == imp);
 		if (openScope) {
 			ErrorManager.warning("ئيراد دائري ل '" + imp + "' من '" + fromFilePath + "'");
@@ -72,7 +76,6 @@ export class ImportManager {
 			if (!isAutoImport) {
 				ImportManager.openScopes.pop();
 			}
-			var info = await ImportManager.getImportInfo(imp);
 			scope.importName = '/' + info.importName + '.mjs';
 			return scope;
 		}
@@ -195,7 +198,7 @@ export class ImportManager {
 		var name = splitted[splitted.length-1]; // last part is filename
 		// ئساسية.عنصر becomes ئساسية/عنصر
 		var myImport = impPath.replaceAll('.', '/');
-		
+
 		// try to find like /projectPath/مستورد.جني
 		var filePath1 = vfs.joinPath(basePath, myImport + '.جني');
 		// or find like /projectPath/مستورد/مستورد.جني
@@ -204,6 +207,7 @@ export class ImportManager {
 		// or find like /projectPath/ئساسية/مستورد.جني
 		var filePath3 = vfs.joinPath(basePath, 'ئساسية');
 		filePath3 = vfs.joinPath(filePath3, name + '.جني');
+
 		// or if findName find like /projectPath/ئساسية/جيزن.جني
 		var filePath4 = null;
 		if (findName) {

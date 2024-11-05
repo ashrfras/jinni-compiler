@@ -107,7 +107,7 @@ export class Symbol {
 	}
 	
 	isIterable () {
-		return ['مصفوفة', 'منوع', 'نوعبنية', 'نوعمركب', 'نوعتعداد', 'مجهول', 'نصية'].includes(this.typeSymbol.name)
+		return ['مصفوفة', 'منوع', 'نوعبنية', 'نوعمركب', 'نوعتعداد', 'مجهول', 'نصية', 'مستطوف'].includes(this.typeSymbol.name)
 			|| this.isArray
 			|| this.typeSymbol.isStruct
 			|| (this.typeSymbol.superSymbol && this.typeSymbol.superSymbol.typeIs('مصفوفة'));

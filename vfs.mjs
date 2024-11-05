@@ -73,7 +73,10 @@ export class vfs {
 			fileName = fileName.replace(vfs.execdir(), '.');
 			fileName = fileName.replaceAll('/', '.').replace('..', '/');
 		} else if (isBrowser()) {
-			fileName = '/' + fpath.replace('.جني', '.mjs');
+			fpath = vfs.getNoDbPath(fpath);
+			fileName = fpath.replaceAll('/', '.');
+			//fileName = fpath.replace('.', './');
+			fileName = fileName.replace('.جني', '.mjs');
 		}
 		
 		// make sure not to repeat last two names: ئساسية.ئساسية.جني becomes ئساسية.جني
@@ -191,11 +194,20 @@ export class vfs {
 			var dbName = vfs.getDbName(filePath);
 			var myDb = new PouchDB(dbName);
 			myDb = myDb['بتش'];
-			//var nodbPath = vfs.getNodbPath(filePath);
-			await myDb.put({
-				_id: filePath,
-				content
-			});
+			filePath = vfs.getNoDbPath(filePath);
+			// get file if already exist
+			var myFile;
+			filePath = filePath.replace('.جني', '.mjs');
+			try {
+				myFile = await myDb.get(filePath);
+				myFile.content = content;
+			} catch (e) {
+				myFile = {
+					_id: filePath,
+					content
+				};
+			}
+			await myDb.put(myFile);
 		}
 	}
 	static ئكتبملف = vfs.writeFile;
@@ -213,10 +225,32 @@ export class vfs {
 			var dbName = vfs.getDbName(filePath);
 			var myDb = new PouchDB(dbName);
 			myDb = myDb['بتش'];
-			var fulfilled = false;
+			filePath = vfs.getNoDbPath(filePath);
 			var myDoc = await myDb.get(filePath);
 			if (myDoc) {
-				return myDoc.content;
+				if (filePath.endsWith('.جني')) {
+					var result = await myDb.find({
+						selector: {
+							نوع: 'بطاقة',
+							وحدة: filePath
+						},
+						limit: 3000
+					});
+					var cards = result.docs;
+					cards.sort((a, b) => a.رتبة - b.رتبة);
+					
+					//var contents_imports = cards.filter((card) => card.نوعبطاقة == 'ئوردين').map((card) => card.محتوا);
+					//var contents_vars = cards.filter((card) => card.نوعبطاقة == 'متغيرين').map((card) => card.محتوا);
+					//var contents_struct = cards.filter((card) => card.نوعبطاقة == 'مركبين').map((card) => card.محتوا);
+					//var contents_funcs = cards.filter((card) => card.نوعبطاقة == 'وضيفة').map((card) => card.محتوا);
+					//var result = contents_imports.join('\n') + contents_struct.join('\n') + '\n' + contents_vars.join('\n') + '\n' + contents_funcs.join('\n');
+					
+					var results = cards.map((card) => card.محتوا);
+					var result = results.join('\n');
+					return result;
+				} else {
+					return myDoc.content;
+				}
 			} else {
 				return false;
 			}
@@ -258,8 +292,9 @@ export class vfs {
 			var dbName = vfs.getDbName(filePath);
 			var myDb = new PouchDB(dbName);
 			myDb = myDb['بتش'];
+			var nodbPath = vfs.getNoDbPath(filePath);
 			try {
-				await myDb.get(filePath);
+				await myDb.get(nodbPath);
 				return true;
 			} catch (err) {
 				return false;
@@ -280,6 +315,9 @@ export class vfs {
 			mySrcDb = mySrcDb['بتش'];
 			var myDstDb = new PouchDb(dstDb);
 			myDstDb = myDstDb['بتش'];
+			
+			srcPath = vfs.getNoDbPath(srcPath);
+			dstPath = vfs.getNoDbPath(dstPath);
 			
 			var mySrcDoc = await mySrcDb.get(srcPath);
 			var myDstDoc = await myDstDb.get(dstPath);
