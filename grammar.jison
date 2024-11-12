@@ -160,7 +160,7 @@
 			});
 			return scope;
 		} catch (e) {
-			//console.log(e);
+			console.log(e);
 			ErrorManager.printAll();
 		}
 	}
@@ -369,6 +369,7 @@ declstatement_list
 declstatement
 	: import_statement semic_or_nl { $$ = $1; }
 	| depend_statement semic_or_nl { $$ = $1; }
+	| decl_statement { $$ = ''; }
 	| function_def { $$ = $1; }
 	| var_def semic_or_nl { $$ = $1; }
 	| variable_def semic_or_nl { $$ = $1; }
@@ -618,6 +619,49 @@ depend_statement
 
 
 ////
+decl_statement
+	: function_decl function_ret '؛' {
+		ErrorManager.setContext(@1, context.filePath);
+		
+		yy.symbolScopes.exit();
+		
+		// funcSymb is the same as selfSymb
+		var selfSymb = yy.selfStack.pop();
+		var funcSymb = yy.funcStack.pop();
+		
+		// set this as header symbol
+		funcSymb.setAsHeader(true);
+	}
+	| subfunc_decl function_ret '؛' {
+		ErrorManager.setContext(@1, context.filePath);
+		
+		yy.symbolScopes.exit();
+		
+		var funcSymb = yy.funcStack.pop();
+		var selfSymb = yy.selfStack[yy.selfStack.length-1];
+		
+		// set this as header symbol
+		funcSymb.setAsHeader(true);
+		selfSymb.isClass = true;
+		selfSymb.typeSymbol = selfSymb;
+	}
+	| DECL struct_decl '؛' {
+		var funcSymb = yy.funcStack.pop(); // exit struct scope
+		yy.symbolScopes.exit();
+		// set this as header symbol
+		funcSymb.setAsHeader(true);
+	}
+	| DECL enum_decl '؛' {
+		var funcSymb = yy.funcStack.pop(); // exit enum scope
+		yy.symbolScopes.exit();
+		// set this as header symbol
+		funcSymb.setAsHeader(true);
+	}
+	;
+////
+
+
+////
 variable_def
 	: DECL IDENTIFIER AS type_decl {
 		ErrorManager.setContext(@1, context.filePath);
@@ -767,7 +811,7 @@ function_def
 			var asyncStr = funcSymb.isAwait ? 'async ' : '';
 			$$ = function_decl.exportStr + asyncStr + 'function ' + function_decl.funcname + function_decl.params + body_block;
 		}
-	}
+	}		
 	| subfunc_decl function_ret body_block {
 		ErrorManager.setContext(@1, context.filePath);
 		
@@ -1042,23 +1086,26 @@ shortcuts_call
 		if (selfSymb.name == funcSymb.name) { // we are in a class
 			selfSymb.myShortcut = $2;
 			var superSymb = yy.symbolScopes.getSymbByName($2);
+			// if already have members, this means we used a has or extends before shortcuts > error
+			//if (selfSymb.isClass && !selfSymb.isHeader) {
+				//ErrorManager.error('يجب ئن تكون صيغة يختصر كئول سطر في المجموعة');
+			//}
 			// TODO: for now we grant that when a func shortcuts then its a class
 			selfSymb.isClass = true;
 			selfSymb.typeSymbol = selfSymb; // change type to itself
-			// if already have members, this means we used a has or extends before shortcuts > error
-			if (selfSymb.members.length) {
-				ErrorManager.error('يجب ئن تكون صيغة يختصر كئول سطر في المجموعة');
-			}
 			// copy origi members to self members if we are in a class
 			superSymb.copyMembersTo(selfSymb);
 		} else { // we are in a subfunction
-			if (!selfSymb.isShortcut()) {
-				// parent not shortcuting
-				selfSymb.checkMember($2);
-			} else {
-				// parent have a shortcut
-				var superSymb = yy.symbolScopes.getSymbByName(selfSymb.myShortcut);
-				superSymb.checkMember($2);
+			// we only do this check to non header declarations
+			if (!selfSymb.isHeader) {
+				if (!selfSymb.isShortcut()) {
+					// parent not shortcuting
+					selfSymb.checkMember($2);
+				} else {
+					// parent have a shortcut
+					var superSymb = yy.symbolScopes.getSymbByName(selfSymb.myShortcut);
+					superSymb.checkMember($2);
+				}
 			}
 		}
 	}
@@ -1425,7 +1472,7 @@ return_statement
 		ErrorManager.setContext(@1, context.filePath);
 		var funcSymb = yy.funcStack[yy.funcStack.length-1];
 		if (funcSymb.typeIs('فارغ')) {
-			ErrorManager.warning("ئستخدام ئرجاع في وضيفة فارغة، سيتم التحويل ئلا منوع");
+			ErrorManager.warning("ئستخدام ئرجاع في وضيفة فارغة");
 			// convert function return type to منوع
 			funcSymb.typeSymbol = Symbol.SYSTEMTYPES['منوع'];
 		}

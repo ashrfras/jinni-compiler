@@ -22,7 +22,8 @@
 		ئمبي4: 'video/mp4'،
 		زيب: 'application/zip'،
 		ئشتمل: 'text/html'،
-		جافاسكربت: 'text/javascript'
+		جافاسكربت: 'text/javascript'،
+		ورقسمة: 'text/css'
 	}؛
 	ئرجع مدخنوع[نوعم] ك نصية ئو ''؛
 تم
