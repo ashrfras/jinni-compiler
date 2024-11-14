@@ -335,7 +335,7 @@ export class vfs {
 			
 			var record = {
 				_id: dstPath,
-				content: mySrcDoc.content,
+				content: mySrcDoc.محتوا,
 			};
 			
 			try {
