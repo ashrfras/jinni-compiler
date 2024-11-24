@@ -118,7 +118,7 @@ try {
 	console.error(error);
 }
 
-ErrorManager.printAll(false);
+console.log(ErrorManager.printAll(false));
 
 if (ErrorManager.isBlocking) {
 	console.error('خطئين فادحين، ترجا المراجعة');
@@ -195,7 +195,31 @@ if (is_web) {
 	
 	// run server
 	runScript(path.join(projectPath, 'server.mjs'));
+	
 } else {
+	
+	// template package.json
+	var packagejson;
+	try {
+		packagejson = fs.readFileSync(path.join(vfs.execdir(), './templates/package.json'), 'utf8');
+	} catch (error) {
+		console.error('فشلت قرائة الملف: ', error);
+	}
+	
+	// process and create package.json
+	var deps = {};
+	ImportManager.dependencies.forEach(d => {
+		if (!deps[d]) {
+			deps[d] = 'latest';
+		}
+	});
+	packagejson = packagejson.replace('%ئعتمادين%', JSON.stringify(deps));
+	try {
+		fs.writeFileSync(path.join(projectPath, 'package.json'), packagejson, { flag: 'w+' });
+	} catch (error) {
+		console.error('فشلت الكتابة في الملف: ', error);
+	}
+	
 	// run
 	var scriptPath = path.join(projectPath, '__خام__', fileName + '.mjs');
 	runScript(scriptPath, userParams);

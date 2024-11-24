@@ -2291,6 +2291,9 @@ parse: async function parse (input) {
     //this.reductionCount = this.shiftCount = 0;
 
     var lexer = Object.create(this.lexer);
+	ErrorManager.lexer = lexer;
+	ErrorManager.input = input;
+	
     var sharedState = { yy: {} };
     // copy state
     for (var k in this.yy) {
@@ -2527,6 +2530,8 @@ _handle_error:
 		
 		parser.originalParse = parser.parse;
 		parser.parse = async function (input, ctx) {
+			ErrorManager.parser = parser;
+			
 			// here we add global imports to the input source code
 			// do not add global imports on inlineparses
 			var fileName = vfs.basename(ctx.filePath);
