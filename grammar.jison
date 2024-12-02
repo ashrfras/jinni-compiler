@@ -86,6 +86,7 @@
 "ليس"(?![a-zA-Z0-9_\u0621-\u0669])       			return 'NOT'
 "حاول"(?![a-zA-Z0-9_\u0621-\u0669])					return 'TRY'
 "ئستدرك"(?![a-zA-Z0-9_\u0621-\u0669])				return 'EXCEPT'
+"ئلقي"(?![a-zA-Z0-9_\u0621-\u0669])					return 'THROW'
 
 \"(?:[^"\\]|\\[\s\S])*\"							return 'STRING' // Double quoted string
 \'[^'\n]*\'											return 'STRING' // Single quoted string
@@ -348,7 +349,7 @@ program
 		let outFilePath = vfs.outputFilePath(fileName);
 		
 		await vfs.writeFile(outFilePath, result);
-		
+
 		// get global scope
 		var glob = yy.symbolScopes.exit();
 		// remove import symbols from the scope
@@ -400,6 +401,7 @@ statement
 	| assignment semic_or_nl { $$ = $1.value; }
 	| expression semic_or_nl { $$ = $1.value; }
     | error { $$ = ''; }
+	| throw_statement semic_or_nl { $$ = $1; }
     ;
 semic_or_nl
     : '؛'
@@ -1612,7 +1614,7 @@ else_head
 ////
 try_statement
 	: try_head noend_block exept_head body_block {
-		$$ = 'try ' + $2 + 'catch (فشل) ' + $4;
+		$$ = 'try ' + $2 + $3 + $4;
 	}
 	;
 try_head
@@ -1625,6 +1627,29 @@ exept_head
 	: EXCEPT {
 		ErrorManager.setContext(@1, context.filePath);
 		yy.symbolScopes.enter();
+		$$ = 'catch (e)';
+	}
+	| EXCEPT IDENTIFIER AS IDENTIFIER {
+		ErrorManager.setContext(@1, context.filePath);
+		yy.symbolScopes.enter();
+		var typeSymb = yy.symbolScopes.getSymbByName($4);
+		if (!typeSymb.doExtend('فشل')) {
+			ErrorManager.error("يمكن فقط ئستدارك كائن فشل ئو كائن يمدده");
+		}
+		yy.symbolScopes.declareSymbol($2, $4);
+		$$ = 'catch (' + $2 + ')';
+	}
+	;
+	
+	
+////
+throw_statement
+	: THROW expression {
+		ErrorManager.setContext(@1, context.filePath);
+		if (!$2.symb.doExtend('فشل')) {
+			ErrorManager.error("يمكن فقط ئلقائ كائن فشل ئو كائن يمدده");
+		}
+		$$ = 'throw ' + $2.value;
 	}
 	;
 
