@@ -67,6 +67,8 @@
 "حاول"(?![a-zA-Z0-9_\u0621-\u0669])					return 'KEYWORD'
 "ئستدرك"(?![a-zA-Z0-9_\u0621-\u0669])				return 'KEYWORD'
 "ئلقي"(?![a-zA-Z0-9_\u0621-\u0669])					return 'KEYWORD'
+"ئستمر"(?![a-zA-Z0-9_\u0621-\u0669])				return 'CONTINUE'
+"ئكسر"(?![a-zA-Z0-9_\u0621-\u0669])					return 'BREAK'
 
 \"(?:[^"\\]|\\[\s\S])*\"							return 'STRING' // Double quoted string
 \'[^'\n]*\'											return 'STRING' // Single quoted string

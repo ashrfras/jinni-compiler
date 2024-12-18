@@ -87,6 +87,8 @@
 "حاول"(?![a-zA-Z0-9_\u0621-\u0669])					return 'TRY'
 "ئستدرك"(?![a-zA-Z0-9_\u0621-\u0669])				return 'EXCEPT'
 "ئلقي"(?![a-zA-Z0-9_\u0621-\u0669])					return 'THROW'
+"ئستمر"(?![a-zA-Z0-9_\u0621-\u0669])				return 'CONTINUE'
+"ئكسر"(?![a-zA-Z0-9_\u0621-\u0669])					return 'BREAK'
 
 \"(?:[^"\\]|\\[\s\S])*\"							return 'STRING' // Double quoted string
 \'[^'\n]*\'											return 'STRING' // Single quoted string
@@ -396,6 +398,8 @@ statement
 	| return_statement semic_or_nl { $$ = $1; }
 	| while_statement { $$ = $1; }
     | for_in_statement { $$ = $1; }
+	| continue_statement semic_or_nl { $$ = $1; }
+	| break_statement semic_or_nl { $$ = $1; }
 	| if_statement { $$ = $1; }
 	| try_statement { $$ = $1; }
 	| assignment semic_or_nl { $$ = $1.value; }
@@ -1549,6 +1553,20 @@ for_in_head
 		//} else {
 			//$$ = 'for (var ' + $2 + ' in ' + $4.value + ')';
 		//}
+	}
+	;
+////
+
+
+////
+continue_statement
+	: CONTINUE {
+		$$ = 'continue';
+	}
+	;
+break_statement
+	: BREAK {
+		$$ = 'break';
 	}
 	;
 ////
