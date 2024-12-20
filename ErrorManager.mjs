@@ -75,8 +75,8 @@ export class ErrorManager {
 		var result = {
 			كمخطئ: errors.length,
 			كمتحدير: warnings.length,
-			خطئين: errors.map(er => er.format()),
-			تحديرين: warnings.map(warn => warn.format())
+			خطئين: errors.map(er => er.format())
+			//تحديرين: warnings.map(warn => warn.format())
 		}
 		
 		if (exit) {

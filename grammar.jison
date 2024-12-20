@@ -133,7 +133,7 @@
 				return result;
 			} catch (e) {
 				// exception while parsing, lets show errors
-				//console.log(e);
+				console.log(e);
 				ErrorManager.printAll();
 			}
 		}
