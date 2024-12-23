@@ -7,7 +7,7 @@ Jinni is a unique programming language inspired by the Arabic language, designed
 
 To get started quickly with Jinni, we recommend watching this short video tutorial. It will guide you through the basics and help you set up your environment in no time!
 
-[![Watch the Video](https://img.youtube.com/vi/YOUR_VIDEO_ID/0.jpg)](https://www.youtube.com/watch?v=YOUR_VIDEO_ID)
+[![Watch the Video](https://img.youtube.com/vi/BQzUNQDYPd4/0.jpg)](https://youtube.com/shorts/BQzUNQDYPd4)
 
 Feel free to reach out if you have any questions or need further assistance!
 
