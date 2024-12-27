@@ -5,15 +5,19 @@ Jinni is a unique programming language inspired by the Arabic language, designed
 
 ## Quick Start
 
-To get started quickly with Jinni, we recommend watching this short video tutorial. It will guide you through the basics and help you set up your environment in no time!
+To get started quickly with Jinni, we recommend starting with these short video tutorials:
 
-[![Watch the Video](https://img.youtube.com/vi/BQzUNQDYPd4/0.jpg)](https://youtube.com/shorts/BQzUNQDYPd4)
+- [Set up your environment](https://www.youtube.com/shorts/BQzUNQDYPd4)
+- [Hello JinX](https://www.youtube.com/shorts/pZylVaqCatA)
+- [Introduction to components](https://www.youtube.com/shorts/qwOY_jzM9I0)
 
 Feel free to reach out if you have any questions or need further assistance!
 
 ## Getting Help
 
-If you need help or have questions, feel free to reach out to me via [Email](mailto:ashraf.ras@raqmain.net). I’ll do my best to respond promptly!
+The most effective way to engage with this project or seek assistance is through GitHub Discussions. You can access it from the menu above to ask any questions you may have.
+
+Alternatively, you are welcome to contact me via [email](mailto:ashraf.ras@raqmain.net), and I will make every effort to respond promptly.
 
 ## License
 
