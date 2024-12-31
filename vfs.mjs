@@ -276,8 +276,8 @@ export class vfs {
 			var dbName = vfs.getDbName(dirPath);
 			var myDb = new PouchDB(dbName);
 			myDb = myDb['بتش'];
-			await myDb.destroy();
-			new PouchDB(dbName);
+			//await myDb.destroy();
+			//new PouchDB(dbName);
 		}
 	}
 	static ئعدئنشائ = vfs.remakeDir;
@@ -299,8 +299,12 @@ export class vfs {
 			myDb = myDb['بتش'];
 			var nodbPath = vfs.getNoDbPath(filePath);
 			try {
-				await myDb.get(nodbPath);
-				return true;
+				var result = await myDb.get(nodbPath);
+				if (result) {
+					return true;
+				} else {
+					return false;
+				}
 			} catch (err) {
 				return false;
 			}
