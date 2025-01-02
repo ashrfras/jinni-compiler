@@ -10,7 +10,8 @@
 	بنجي،
 	ئمبي4،
 	زيب،
-	ئشتمل
+	ئشتمل،
+	فكتور
 تم
 
 ئعلن ردئسمخام (نوعميم نوعم) ك نصية:
@@ -23,7 +24,26 @@
 		زيب: 'application/zip'،
 		ئشتمل: 'text/html'،
 		جافاسكربت: 'text/javascript'،
-		ورقسمة: 'text/css'
+		ورقسمة: 'text/css'،
+		فكتور: 'image/svg+xml'
 	}؛
 	ئرجع مدخنوع[نوعم] ك نصية ئو ''؛
+تم
+
+ئعلن ردمنئمتداد (نصية ئمتد) ك نصية:
+	دع مدخنوع = {
+		txt: 'text/plain'،
+		json: 'application/json'،
+		jpg: 'image/jpeg'،
+		jpeg: 'image/jpeg'،
+		png: 'image/png'،
+		mp4: 'video/mp4'،
+		zip: 'application/zip'،
+		html: 'text/html'،
+		js: 'text/javascript'،
+		mjs: 'text/javascript'،
+		css: 'text/css'،
+		svg: 'image/svg+xml'
+	}؛
+	ئرجع مدخنوع[ئمتد] ك نصية ئو ''؛
 تم
