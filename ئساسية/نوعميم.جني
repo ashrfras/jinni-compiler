@@ -32,18 +32,18 @@
 
 ئعلن ردمنئمتداد (نصية ئمتد) ك نصية:
 	دع مدخنوع = {
-		txt: 'text/plain'،
-		json: 'application/json'،
-		jpg: 'image/jpeg'،
-		jpeg: 'image/jpeg'،
-		png: 'image/png'،
-		mp4: 'video/mp4'،
-		zip: 'application/zip'،
-		html: 'text/html'،
-		js: 'text/javascript'،
-		mjs: 'text/javascript'،
-		css: 'text/css'،
-		svg: 'image/svg+xml'
+		txt: 'نصصرف'،
+		json: 'جيزن'،
+		jpg: 'جبجي'،
+		jpeg: 'جبجي'،
+		png: 'بنجي'،
+		mp4: 'ئمبي4'،
+		zip: 'زيب'،
+		html: 'ئشتمل'،
+		js: 'جافاسكربت'،
+		mjs: 'جافاسكربت'،
+		css: 'ورقسمة'،
+		svg: 'فكتور'
 	}؛
 	ئرجع مدخنوع[ئمتد] ك نصية ئو ''؛
 تم
