@@ -40,6 +40,7 @@
 		عدد مررئعلا يختصر scrollTop،
 		عدد مرريسار يختصر scrollLeft،
 		عدد عرضتمرير يختصر scrollWidth،
+		عدد طولتمرير يختصر scrollHeight،
 		جدرمخفي جدرمخفي يختصر shadowRoot، 
 		خاصيات يختصر attributes، 
 		صنفين يختصر classList، 

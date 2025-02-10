@@ -60,7 +60,7 @@
 		بدتحميل:'loadstart'، دخولمئشر:'mouseenter'، عجلة:'wheel'، تمرير:'scroll'،
 		تحجيم:'resize'، نهايتلمس:'touchend'، ئرسال:'submit'، بدايتلمس:'touchstart'، تحريكمئشر:'mousemove'،
 		ضغطمئشر:'mousedown'، تركمئشر:'mouseup'، تحريكلمس:'touchmove'، تتبيت:'install'،
-		جلب:'fetch'، تنشيط:'activate'، رسالة:'message'، دفع:'push'
+		جلب:'fetch'، تنشيط:'activate'، رسالة:'message'، دفع:'push'، لصق: 'paste'
 	}؛
 	ئرجع (قموس[ئسم] ك نصية) ئو ئسم؛
 تم
