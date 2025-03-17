@@ -89,6 +89,7 @@
 "ئلقي"(?![a-zA-Z0-9_\u0621-\u0669])					return 'THROW'
 "ئستمر"(?![a-zA-Z0-9_\u0621-\u0669])				return 'CONTINUE'
 "ئكسر"(?![a-zA-Z0-9_\u0621-\u0669])					return 'BREAK'
+"عوض"(?![a-zA-Z0-9_\u0621-\u0669])					return 'REPLACE'
 
 \"(?:[^"\\]|\\[\s\S])*\"							return 'STRING' // Double quoted string
 \'[^'\n]*\'											return 'STRING' // Single quoted string
@@ -1199,6 +1200,12 @@ has_list_element
 		$1.symb.myShortcut = $3;
 		$$ = $1;
 	}
+	| param_decl REPLACE IDENTIFIER {
+		ErrorManager.setContext(@1, context.filePath);
+		// we are not going to check replacees
+		$1.symb.myShortcut = $3;
+		$$ = $1;
+	}
 	| SPREAD { // this is for composits (structs)
 		$$ = {
 			isSpread: true
@@ -1366,6 +1373,8 @@ var_declaration
 		ErrorManager.setContext(@1, context.filePath);
 		// عدد ب = 4
 		var mySymb = yy.symbolScopes.declareSymbol($2, $1);
+		var expValue = $4.value;
+		
 		if (!$4.symb.canBeAssignedTo(mySymb)) {
 			// type mismatch
 			ErrorManager.error("محاولة ئسناد '" + $4.symb.toString() + "' ئلا '" + $1 + "'");
@@ -1376,10 +1385,14 @@ var_declaration
 			if (!mySymb.typeSymbol.isStruct) {
 				// mySymb is generic add struct memebers to it
 				mySymb.members = $4.symb.members;
+			} else {
+				// mySymb is a defined struct
+				// this will check if there are any prop replacements
+				expValue = mySymb.typeSymbol.getStructValue($4.value);
 			}
 		}
 		
-		$$ = 'let ' + $2 + ' = ' + $4.value;
+		$$ = 'let ' + $2 + ' = ' + expValue;
 	}
 	| IDENTIFIER '[' ']' IDENTIFIER '=' expression {
 		ErrorManager.setContext(@1, context.filePath);
@@ -1678,6 +1691,7 @@ assignment
     : IDENTIFIER '=' expression {
 		ErrorManager.setContext(@1, context.filePath);
 		var mySymb = yy.symbolScopes.getSymbByName($1);
+		var expValue = $3.value;
 		// imported symbols can't be directly changed
 		if (mySymb.isImport) {
 			ErrorManager.error("يتعدر تغيير قيمة متغير الئيراد " + mySymb.toString());
@@ -1695,15 +1709,20 @@ assignment
 			if (!mySymb.typeSymbol.isStruct) {
 				// mySymb is generic add struct memebers to it
 				mySymb.members = $3.symb.members;
+			} else {
+				// mySymb is a defined struct
+				// this will check if there are any prop replacements
+				expValue = mySymb.typeSymbol.getStructValue($3.value);
 			}
 		}
 		$$ = {
 			symb: mySymb,
-			value: $1 + '=' + $3.value
+			value: $1 + '=' + expValue
 		}
 	}
     | member_access '=' expression {
 		ErrorManager.setContext(@1, context.filePath);
+		var expValue = $3.value;
 		if ($1.symb) {
 			var mySymb = $1.symb;
 			if (!$3.symb.canBeAssignedTo(mySymb)) {
@@ -1714,12 +1733,16 @@ assignment
 				if (!mySymb.typeSymbol.isStruct) {
 					// mySymb is generic add struct memebers to it
 					mySymb.members = $3.symb.members;
+				} else {
+					// mySymb is a defined struct
+					// this will check if there are any prop replacements
+					expValue = mySymb.typeSymbol.getStructValue($3.value);
 				}
 			}
 		}
 		$$ = {
 			symb: $3.symb,
-			value: $1.value + '=' + $3.value
+			value: $1.value + '=' + expValue
 		}
 	}
     | array_access '=' expression {
@@ -1865,6 +1888,8 @@ function_call
 		var paramValues = symb.checkArgs($3);
 		// check if class or function
 		var newStr = symb.isClass ? 'new ' : '';
+		// check for struct params
+		
 		$$ = {
 			symb: symb,
 			value: newStr + $1 + '(' + paramValues.join(', ') + ')'

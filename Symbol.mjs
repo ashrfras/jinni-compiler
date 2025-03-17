@@ -321,6 +321,18 @@ export class Symbol {
 		return (this.typeIs('نوعمركب') || this.typeSymbol.isStruct);
 	}
 	
+	getStructValue (value) {
+		if (this.isStructType()) {
+			this.members.forEach((mem) => {
+				if (mem.myShortcut && mem.myShortcut != '') {
+					// this member have a shortcut
+					value = value.replace(mem.name + ':', mem.myShortcut + ':');
+				}
+			});
+		}
+		return value;
+	}
+	
 	// generic struct (or generic composite) is a variable declared with "نوعمركب"
 	isGenericStructType () {
 		return (this.typeIs('نوعمركب') && !this.typeSymbol.isComposite);
@@ -506,7 +518,7 @@ export class Symbol {
 		if (isNamedArgs) {
 			// if a mixture of named and unammed, error
 			if (symbs.some(item => item.name == null)) {
-				ErrorManager.error("تمرير مزيج من المعطيين المسمين والموضعيين");
+				ErrorManager.error("تمرير مزيج من المعطيات المسماة والموضعية");
 				return;
 			}
 			return this.checkNamedArgs (symbs);
@@ -535,12 +547,23 @@ export class Symbol {
 					);
 					break;
 				}
+				
+				// thatSymb.symb is Symbol of given parameter
+				// mySymb.symb is Symbol of declared parameter
+				if (thatSymb.symb.typeIs('نوعبنية') || thatSymb.symb.typeIs('نوعمركب')) {
+					// given arg is an object literal
+					if (mySymb.symb.typeSymbol.isStruct) {
+						// declared arg is a defined struct
+						thatSymb.value = mySymb.symb.typeSymbol.getStructValue(thatSymb.value);
+					}
+				}
+				
 				outputValues.push(thatSymb.value);
 			}
 		}
 		// if still other params in the input symns, then error
 		if (outputValues.filter(o => o != 'undefined').length != symbs.length) {
-			ErrorManager.error("معطيين ئضافيين غير صالحين في " + this.toFuncString());
+			ErrorManager.error("معطيات ئضافية غير صالحة في " + this.toFuncString());
 		}
 		return outputValues;
 	}
@@ -564,6 +587,15 @@ export class Symbol {
 					" غير متوافق. يتوقع " + myArg.symb.toTypeString() + " في " + this.toFuncString() 
 				);
 				break;
+			}
+			// thatArg is Symbol of given parameter
+			// myArg.symb is Symbol of declared parameter
+			if (thatArg.typeIs('نوعبنية') || thatArg.typeIs('نوعمركب')) {
+				// given arg is an object literal
+				if (myArg.symb.typeSymbol.isStruct) {
+					// declared arg is a defined struct
+					symbs[i].value = myArg.symb.typeSymbol.getStructValue(symbs[i].value);
+				}
 			}
 			outputValues.push(symbs[i].value);
 		}
