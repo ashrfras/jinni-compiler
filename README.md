@@ -1,8 +1,6 @@
 # Jinni
 Jinni is a unique programming language inspired by the Arabic language, designed to enhance coding practices and promote the integration of Arabic linguistic elements in software development. This project aims to explore the potential of Technical Arabic in programming, providing a fresh approach to coding that blends cultural heritage with modern technology.
 
-![jinni_github](https://github.com/ashrfras/jinni/assets/169364198/0a495a86-5c30-49c9-96de-49e6e7d8ab32)
-
 ## Getting Help
 
 The most effective way to engage with this project or seek assistance is through GitHub Discussions. You can access it from the menu above to ask any questions you may have.
